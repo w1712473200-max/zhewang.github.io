@@ -1,0 +1,1826 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vetwish包装设计评审系统</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18202a;
+      --muted: #657181;
+      --line: #dbe3ee;
+      --soft: #f6f8fb;
+      --paper: #ffffff;
+      --brand: #2563eb;
+      --brand-dark: #1d4ed8;
+      --brand-soft: #eff6ff;
+      --accent: #0ea5e9;
+      --gold: #2563eb;
+      --good: #24845b;
+      --warn: #c8751b;
+      --risk: #c34141;
+      --shadow: 0 18px 45px rgba(30, 41, 59, .10);
+      --shadow-soft: 0 10px 24px rgba(30, 41, 59, .07);
+      --shadow-card: 0 16px 36px rgba(15, 23, 42, .08);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 88% 6%, rgba(37, 99, 235, .12), transparent 26%),
+        radial-gradient(circle at 52% 18%, rgba(14, 165, 233, .08), transparent 24%),
+        linear-gradient(180deg, #f8fbff 0%, #eef3f9 46%, #f7f9fc 100%);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(320px, 410px) minmax(0, 1fr);
+    }
+
+    .sidebar {
+      background:
+        linear-gradient(160deg, rgba(59, 130, 246, .28), transparent 34%),
+        linear-gradient(0deg, rgba(15, 23, 42, .92), rgba(15, 23, 42, .92)),
+        #111827;
+      color: #fff;
+      padding: 30px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      border-right: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .brand-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      color: #ffffff;
+      font-weight: 800;
+      box-shadow: 0 14px 26px rgba(37, 99, 235, .30);
+    }
+
+    .title {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: #b7c2cc;
+      font-size: 13px;
+    }
+
+    .upload-box {
+      border: 1px solid rgba(147, 197, 253, .32);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(255, 255, 255, .08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+      margin-top: 12px;
+    }
+
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .upload-label {
+      min-height: 166px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      cursor: pointer;
+      color: #d9e1e8;
+      border: 1px dashed rgba(255, 255, 255, .34);
+      border-radius: 11px;
+      background: rgba(15, 23, 42, .22);
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .upload-label:hover {
+      border-color: #93c5fd;
+      background: rgba(37, 99, 235, .14);
+      transform: translateY(-1px);
+    }
+
+    .upload-label strong {
+      display: block;
+      color: #fff;
+      margin-bottom: 8px;
+      font-size: 17px;
+    }
+
+    .preview {
+      display: none;
+      width: 100%;
+      max-height: 320px;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 11px;
+    }
+
+    .meta-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: #d9e1e8;
+      font-size: 13px;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .10);
+      color: #fff;
+      padding: 12px 13px;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .field textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: #60a5fa;
+      background: rgba(255, 255, 255, .14);
+      box-shadow: 0 0 0 4px rgba(96, 165, 250, .14);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .actions .btn-wide {
+      grid-column: 1 / -1;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      min-height: 44px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: #ffffff;
+      box-shadow: 0 12px 22px rgba(37, 99, 235, .25);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, .13);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, .16);
+    }
+
+    .main {
+      padding: 34px;
+    }
+
+    .workflow-strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .workflow-step {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .78);
+      padding: 14px;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, .04);
+    }
+
+    .workflow-step strong {
+      display: block;
+      color: var(--brand-dark);
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .workflow-step span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .section-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      margin: 22px 2px 14px;
+    }
+
+    .section-label h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 850;
+    }
+
+    .section-label p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .summary-band {
+      display: grid;
+      grid-template-columns: minmax(210px, 240px) minmax(280px, 1fr) minmax(220px, 260px) minmax(260px, 320px);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 20px;
+    }
+
+    .results-area {
+      display: none;
+      margin-top: 24px;
+    }
+
+    .results-area.is-visible {
+      display: block;
+    }
+
+    .results-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 4px 2px 0;
+    }
+
+    .results-head h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .results-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .score-panel,
+    .advice-panel,
+    .level-panel,
+    .rubric-panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow-card);
+      padding: 20px;
+    }
+
+    .score-panel {
+      border-color: #bfdbfe;
+      background: linear-gradient(180deg, #ffffff, #eff6ff);
+    }
+
+    .score-value {
+      font-size: 54px;
+      line-height: 1;
+      font-weight: 850;
+      color: var(--brand-dark);
+    }
+
+    .score-value span {
+      font-size: 20px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .level {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border-radius: 999px;
+      padding: 0 10px;
+      color: #fff;
+      background: var(--brand);
+      font-weight: 800;
+      margin-top: 10px;
+    }
+
+    .progress {
+      height: 12px;
+      border-radius: 999px;
+      background: #e8edf1;
+      overflow: hidden;
+      margin-top: 18px;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #93c5fd, #2f80ed, #1d4ed8);
+      transition: width .2s ease;
+    }
+
+    .panel-title {
+      margin: 0 0 10px;
+      font-size: 16px;
+      font-weight: 850;
+    }
+
+    .panel-copy {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .risk-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .risk-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      border-radius: 8px;
+      background: #f8fafc;
+      padding: 8px 9px;
+    }
+
+    .rubric-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 7px;
+    }
+
+    .rubric-list li {
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      border-radius: 8px;
+      background: #f8fafc;
+      padding: 7px 8px;
+    }
+
+    .rubric-list strong {
+      color: var(--brand-dark);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .review-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .dimension {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+
+    .dimension:hover {
+      transform: translateY(-2px);
+      border-color: #bfdbfe;
+      box-shadow: 0 18px 36px rgba(30, 41, 59, .10);
+    }
+
+    .dimension-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 22px;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .dimension-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .dimension-kicker {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      margin-bottom: 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 0 9px;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .dimension-desc {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    .weighted-score {
+      min-width: 110px;
+      text-align: right;
+      font-weight: 850;
+      color: var(--brand-dark);
+      font-size: 24px;
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .weighted-score span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .dimension-body {
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr);
+      gap: 18px;
+    }
+
+    .rating {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-content: start;
+    }
+
+    .rating input {
+      position: absolute;
+      opacity: 0;
+    }
+
+    .rating label {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f8fafc;
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--muted);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+    }
+
+    .rating label:hover {
+      transform: translateY(-1px);
+      border-color: #93c5fd;
+      color: var(--brand-dark);
+      background: #eff6ff;
+    }
+
+    .rating input:checked + label {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-color: var(--brand);
+      color: #fff;
+      box-shadow: 0 10px 18px rgba(37, 99, 235, .24);
+    }
+
+    .notes {
+      display: grid;
+      gap: 8px;
+    }
+
+    .notes label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .notes textarea {
+      width: 100%;
+      min-height: 92px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      outline: none;
+      color: var(--ink);
+      background: #fbfdff;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .notes textarea:focus {
+      border-color: var(--brand);
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid #dbeafe;
+      outline: none;
+      cursor: help;
+    }
+
+    .pill:focus {
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
+    }
+
+    .pill-note {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 8px);
+      z-index: 20;
+      display: none;
+      width: min(280px, 72vw);
+      padding: 9px 11px;
+      border: 1px solid #dbe3ee;
+      border-radius: 10px;
+      background: rgba(248, 250, 252, .98);
+      color: #8a94a3;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, .10);
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.55;
+      white-space: normal;
+    }
+
+    .pill:hover .pill-note,
+    .pill:focus .pill-note,
+    .pill:focus-within .pill-note,
+    .pill:active .pill-note {
+      display: block;
+    }
+
+    .report {
+      margin-top: 20px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .report-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .report-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn-report {
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      min-height: 40px;
+      padding: 0 14px;
+      background: #eff6ff;
+      color: var(--brand-dark);
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .btn-report:hover {
+      transform: translateY(-1px);
+      background: #dbeafe;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, .12);
+    }
+
+    .report-output {
+      white-space: pre-wrap;
+      line-height: 1.7;
+      color: #2c3742;
+      background: #f8fafc;
+      border: 1px solid #e1e6eb;
+      border-radius: 12px;
+      padding: 18px;
+      min-height: 190px;
+    }
+
+    .compare-panel {
+      margin-top: 20px;
+      background: rgba(255, 255, 255, .82);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+
+    .compare-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 22px;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .compare-head h2 {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 850;
+    }
+
+    .compare-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .compare-count {
+      color: var(--brand-dark);
+      font-weight: 850;
+    }
+
+    .compare-body {
+      padding: 22px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .compare-empty {
+      border: 1px dashed #bfdbfe;
+      border-radius: 14px;
+      background: #f8fbff;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .compare-card {
+      display: grid;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #ffffff;
+      padding: 14px;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, .05);
+    }
+
+    .compare-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .compare-card-head strong {
+      color: var(--brand-dark);
+      font-size: 14px;
+    }
+
+    .compare-remove {
+      border: 0;
+      background: #f1f5f9;
+      color: var(--muted);
+      border-radius: 8px;
+      min-height: 30px;
+      padding: 0 9px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .compare-upload {
+      min-height: 132px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px dashed #bfdbfe;
+      border-radius: 12px;
+      background: #f8fbff;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 14px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    .compare-upload strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .compare-preview {
+      display: none;
+      width: 100%;
+      max-height: 132px;
+      object-fit: contain;
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+
+    .compare-fields {
+      display: grid;
+      gap: 10px;
+    }
+
+    .compare-fields input,
+    .compare-fields textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 11px;
+      outline: none;
+      background: #fbfdff;
+      color: var(--ink);
+    }
+
+    .compare-fields textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    .compare-score-row {
+      display: grid;
+      grid-template-columns: 1fr 96px;
+      gap: 10px;
+    }
+
+    .compare-insight {
+      border-radius: 14px;
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      color: #1e3a8a;
+      padding: 14px 16px;
+      line-height: 1.6;
+      font-size: 13px;
+    }
+
+    .pdf-report {
+      display: none;
+    }
+
+    @media print {
+      @page {
+        size: A4;
+        margin: 14mm;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      .app {
+        display: none;
+      }
+
+      .pdf-report {
+        display: block;
+        color: #172033;
+        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      }
+
+      .pdf-cover {
+        border-bottom: 3px solid #2563eb;
+        padding-bottom: 16px;
+        margin-bottom: 18px;
+      }
+
+      .pdf-cover h1 {
+        margin: 0 0 8px;
+        font-size: 26px;
+      }
+
+      .pdf-meta,
+      .pdf-summary-grid,
+      .pdf-table {
+        page-break-inside: avoid;
+      }
+
+      .pdf-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 18px;
+        color: #475569;
+        font-size: 12px;
+      }
+
+      .pdf-summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin: 16px 0;
+      }
+
+      .pdf-card {
+        border: 1px solid #dbe3ee;
+        border-radius: 8px;
+        padding: 12px;
+      }
+
+      .pdf-card strong {
+        display: block;
+        color: #64748b;
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+
+      .pdf-score {
+        color: #1d4ed8;
+        font-size: 30px;
+        font-weight: 900;
+      }
+
+      .pdf-section {
+        margin-top: 18px;
+      }
+
+      .pdf-section h2 {
+        margin: 0 0 10px;
+        color: #1d4ed8;
+        font-size: 17px;
+      }
+
+      .pdf-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+      }
+
+      .pdf-table th,
+      .pdf-table td {
+        border: 1px solid #dbe3ee;
+        padding: 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .pdf-table th {
+        background: #eff6ff;
+        color: #1e3a8a;
+      }
+
+      .pdf-list {
+        margin: 0;
+        padding-left: 18px;
+        line-height: 1.7;
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 1360px) {
+      .summary-band {
+        grid-template-columns: minmax(210px, 240px) minmax(0, 1fr);
+      }
+
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1120px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+
+      .workflow-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .summary-band {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .app {
+        min-width: 0;
+      }
+
+      .main,
+      .sidebar {
+        padding: 16px;
+      }
+
+      .brand-line {
+        align-items: flex-start;
+      }
+
+      .title {
+        font-size: 19px;
+        line-height: 1.25;
+      }
+
+      .subtitle {
+        font-size: 12px;
+      }
+
+      .workflow-strip {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .workflow-step {
+        padding: 12px;
+      }
+
+      .section-label {
+        display: block;
+      }
+
+      .report-head {
+        display: block;
+      }
+
+      .compare-head {
+        display: block;
+      }
+
+      .compare-head .btn-report {
+        margin-top: 12px;
+      }
+
+      .report-actions {
+        justify-content: flex-start;
+        margin-top: 12px;
+      }
+
+      .dimension-head,
+      .dimension-body {
+        grid-template-columns: 1fr;
+        padding: 18px;
+      }
+
+      .weighted-score {
+        text-align: left;
+        width: 100%;
+      }
+
+      .pill-row {
+        gap: 7px;
+      }
+
+      .pill {
+        max-width: 100%;
+        min-height: 32px;
+      }
+
+      .pill-note {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        bottom: 18px;
+        top: auto;
+        width: auto;
+        max-width: none;
+        z-index: 100;
+        padding: 11px 12px;
+        font-size: 12px;
+        box-shadow: 0 16px 32px rgba(15, 23, 42, .18);
+      }
+
+      .rating label {
+        width: 42px;
+        height: 42px;
+      }
+
+      .notes textarea {
+        min-height: 84px;
+      }
+
+      .score-value {
+        font-size: 44px;
+      }
+
+      .compare-body,
+      .compare-head,
+      .report {
+        padding: 18px;
+      }
+
+      .compare-score-row {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand-line">
+        <div class="mark">VW</div>
+        <div>
+          <h1 class="title">vetwish包装设计评审系统</h1>
+          <p class="subtitle">100 分制 · 六大维度 · 自动建议</p>
+        </div>
+      </div>
+
+      <section class="upload-box">
+        <input class="file-input" id="designFile" type="file" accept="image/*,.pdf">
+        <label class="upload-label" for="designFile" id="uploadLabel">
+          <span>
+            <strong>上传设计稿</strong>
+            支持图片预览，PDF 将记录文件名
+          </span>
+        </label>
+        <img class="preview" id="preview" alt="设计稿预览">
+      </section>
+
+      <div class="meta-grid">
+        <div class="field">
+          <label for="projectName">项目名称</label>
+          <input id="projectName" placeholder="例如：新品咖啡礼盒包装">
+        </div>
+        <div class="field">
+          <label for="brandName">品牌 / 产品</label>
+          <input id="brandName" placeholder="填写品牌或产品名称">
+        </div>
+        <div class="field">
+          <label for="brief">设计目标</label>
+          <textarea id="brief" placeholder="简要描述定位、渠道、目标人群或本轮评审重点"></textarea>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="generateBtn" type="button">生成评审报告</button>
+        <button class="btn btn-secondary" id="resetBtn" type="button">重置评分</button>
+        <button class="btn btn-secondary btn-wide exportPdfTrigger" type="button">导出 PDF 报告</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="workflow-strip" aria-label="评审流程">
+        <div class="workflow-step">
+          <strong>01 上传设计稿</strong>
+          <span>记录项目与评审背景</span>
+        </div>
+        <div class="workflow-step">
+          <strong>02 六维评分</strong>
+          <span>按权重自动折算总分</span>
+        </div>
+        <div class="workflow-step">
+          <strong>03 方案对比</strong>
+          <span>最多加入三个备选方案</span>
+        </div>
+        <div class="workflow-step">
+          <strong>04 生成结论</strong>
+          <span>汇总短板与优化方向</span>
+        </div>
+        <div class="workflow-step">
+          <strong>05 导出 PDF</strong>
+          <span>形成可归档评审报告</span>
+        </div>
+      </section>
+
+      <section class="section-label" aria-label="评分区域说明">
+        <div>
+          <h2>评审维度</h2>
+          <p>每个维度 1-5 分，系统将根据权重自动换算为 100 分制。</p>
+        </div>
+      </section>
+
+      <section class="review-grid" id="reviewGrid" aria-label="评审维度"></section>
+
+      <section class="compare-panel" aria-label="方案对比">
+        <div class="compare-head">
+          <div>
+            <h2>方案对比</h2>
+            <p>可上传最多 <span class="compare-count">3</span> 个备选方案，与当前评审方案进行横向比较，并汇总进评审报告。</p>
+          </div>
+          <button class="btn-report" id="addCompareBtn" type="button">添加对比方案</button>
+        </div>
+        <div class="compare-body">
+          <div id="comparisonList">
+            <div class="compare-empty">尚未添加对比方案。点击“添加对比方案”，可补充其它包装稿进行方案横评。</div>
+          </div>
+          <div class="compare-insight" id="compareInsight">当前仅评审主方案。添加对比方案后，系统会在报告中整理方案差异、得分参考与优化取舍。</div>
+        </div>
+      </section>
+
+      <section class="results-area" id="resultsArea" aria-label="最终评审结果">
+        <div class="results-head">
+          <div>
+            <h2>最终评审结果</h2>
+            <p>完成全部维度评分后，系统汇总得分、判断短板，并生成可复用报告。</p>
+          </div>
+        </div>
+
+        <section class="summary-band" aria-label="评分汇总">
+          <div class="score-panel">
+            <h2 class="panel-title">最终得分</h2>
+            <div class="score-value"><span id="totalScore">0</span><span> / 100</span></div>
+            <div class="level" id="scoreLevel">待评分</div>
+            <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+          <div class="advice-panel">
+            <h2 class="panel-title">总体判断</h2>
+            <p class="panel-copy" id="overallAdvice">完成六个维度评分后，系统会结合权重识别优势、短板和优先优化方向。</p>
+          </div>
+          <div class="level-panel">
+            <h2 class="panel-title">当前短板</h2>
+            <ul class="risk-list" id="weaknessList">
+              <li><span>尚未评分</span><strong>-</strong></li>
+            </ul>
+          </div>
+          <div class="rubric-panel">
+            <h2 class="panel-title">分数评审备注</h2>
+            <ul class="rubric-list">
+              <li><strong>≥90</strong><span>无需大改，可直接打样投产</span></li>
+              <li><strong>80~89</strong><span>少量细节微调</span></li>
+              <li><strong>70~79</strong><span>版式 / 文案 / 材质局部修改</span></li>
+              <li><strong>60~69</strong><span>视觉、定位需重新优化</span></li>
+              <li><strong>＜60</strong><span>整体方案推翻重做</span></li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="report">
+          <div class="report-head">
+            <div>
+              <h2 class="panel-title">评审报告</h2>
+              <p class="panel-copy">生成完整评审结论后，可导出为适合提交和归档的 PDF 报告。</p>
+            </div>
+            <div class="report-actions">
+              <button class="btn-report exportPdfTrigger" id="exportPdfBtn" type="button">导出 PDF 报告</button>
+            </div>
+          </div>
+          <div class="report-output" id="reportOutput">点击“生成评审报告”后，这里会输出可复制给团队或客户的评审结论。</div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <article class="pdf-report" id="pdfReport" aria-label="PDF评审报告"></article>
+
+  <script>
+    const dimensions = [
+      {
+        id: "strategy",
+        name: "包装战略匹配",
+        weight: 20,
+        factors: ["品牌识别资产", "产品定位匹配", "目标用户匹配", "核心价值传递"],
+        advice: {
+          low: "优先校准品牌资产、产品定位和目标用户画像，让包装先回答“我是谁、卖给谁、为什么买”。",
+          mid: "战略方向基本可读，建议强化核心价值的第一眼表达，并减少与定位无关的视觉噪音。",
+          high: "战略匹配度较好，可以继续把品牌资产沉淀成可复用的包装识别系统。"
+        }
+      },
+      {
+        id: "shelf",
+        name: "货架竞争能力",
+        weight: 15,
+        factors: ["视觉冲击力", "差异化程度", "信息获取效率"],
+        advice: {
+          low: "需要增强远距离识别、品类差异和关键信息层级，避免在货架或搜索结果中被淹没。",
+          mid: "具备一定货架识别度，建议进一步压缩信息路径，让用户更快看见品类、卖点和规格。",
+          high: "货架竞争表现较强，可进入多竞品并排验证，确认真实场景下的识别优势。"
+        }
+      },
+      {
+        id: "visual",
+        name: "视觉执行设计",
+        weight: 20,
+        factors: ["色彩系统", "版式结构", "图形资产", "精致度"],
+        advice: {
+          low: "视觉执行需要系统化整理，重点检查色彩、版式、图形与工艺细节是否支撑同一个设计语言。",
+          mid: "视觉完成度中等，建议提升版式秩序、图形一致性和细节精致度。",
+          high: "视觉执行较成熟，可以围绕延展系列、不同规格和线上缩略图继续验证稳定性。"
+        }
+      },
+      {
+        id: "structure",
+        name: "结构功能体验",
+        weight: 15,
+        factors: ["包装结构合理性", "材质价值感", "供应链稳定性"],
+        advice: {
+          low: "建议尽快复核结构、开启方式、材料成本和供应链可得性，避免好看的方案难以稳定落地。",
+          mid: "结构功能基本成立，建议通过打样测试手感、开合、陈列和运输表现。",
+          high: "结构体验和落地性较稳，可继续优化材料触感、环保表达与成本效率。"
+        }
+      },
+      {
+        id: "conversion",
+        name: "商业转化能力",
+        weight: 20,
+        factors: ["购买理由", "信任建立", "价格支撑", "电商表现"],
+        advice: {
+          low: "购买理由和信任线索需要前置，尤其要补强卖点证据、价格感和电商缩略图可读性。",
+          mid: "具备基础转化能力，建议让利益点、品质证明和价格支撑形成更清楚的说服链。",
+          high: "商业转化潜力较好，可进入渠道 A/B 测试或小范围用户访谈验证。"
+        }
+      },
+      {
+        id: "compliance",
+        name: "法规生产风险",
+        weight: 10,
+        factors: ["信息规范", "落地一致性"],
+        advice: {
+          low: "需要优先排查法规信息、必要标识、印刷误差和生产一致性风险，此项可能影响上市节奏。",
+          mid: "风险处于可控但仍需复核的状态，建议在打样前建立信息校对清单。",
+          high: "法规与生产风险较低，后续仍需在出片、打样和量产前做最终校对。"
+        }
+      }
+    ];
+
+    const reviewGrid = document.getElementById("reviewGrid");
+    const totalScore = document.getElementById("totalScore");
+    const progressFill = document.getElementById("progressFill");
+    const scoreLevel = document.getElementById("scoreLevel");
+    const overallAdvice = document.getElementById("overallAdvice");
+    const weaknessList = document.getElementById("weaknessList");
+    const reportOutput = document.getElementById("reportOutput");
+    const resultsArea = document.getElementById("resultsArea");
+    const uploadLabel = document.getElementById("uploadLabel");
+    const preview = document.getElementById("preview");
+    const pdfReport = document.getElementById("pdfReport");
+    const comparisonList = document.getElementById("comparisonList");
+    const compareInsight = document.getElementById("compareInsight");
+    const addCompareBtn = document.getElementById("addCompareBtn");
+
+    const scoreState = Object.fromEntries(dimensions.map((item) => [item.id, 0]));
+    const notesState = Object.fromEntries(dimensions.map((item) => [item.id, ""]));
+    const compareState = [];
+    const factorNotes = {
+      "品牌识别资产": "评估包装是否充分体现品牌核心视觉资产，使消费者能够快速识别品牌。",
+      "产品定位匹配": "评估包装是否准确传达产品的市场定位，使消费者快速理解产品属于什么类型、适合谁、价值几何。",
+      "目标用户匹配": "评估包装风格是否符合目标消费人群的审美偏好与购买心理。",
+      "核心价值传递": "评估包装是否能够快速、清晰地表达产品最核心的价值卖点。",
+      "视觉冲击力": "评估包装是否能够在货架或页面中第一时间吸引消费者关注。",
+      "差异化程度": "评估包装是否能够与竞品形成明显区隔，建立独特识别度。",
+      "信息获取效率": "评估消费者是否能够快速获取产品名称、卖点及关键信息。",
+      "色彩系统": "评估整体色彩搭配是否统一协调，并符合品牌及产品定位。",
+      "版式结构": "评估信息层级、视觉节奏与页面布局是否清晰有序、易于阅读。",
+      "图形资产": "评估图标、插画、摄影及品牌图形是否强化品牌识别与产品表达。",
+      "精致度": "评估包装在细节、工艺及整体完成度上是否体现高品质感。",
+      "包装结构合理性": "评估包装结构是否兼顾使用体验、保护性能及生产可行性。",
+      "材质价值感": "评估包装材质与工艺是否能够有效支撑产品的品质与价格定位。",
+      "供应链稳定性": "评估包装方案是否具备稳定生产、成本可控及持续供应能力。",
+      "购买理由": "评估包装是否能够有效激发消费者产生购买意愿和行动。",
+      "信任建立": "评估包装是否能够增强产品专业性、可靠性及品牌可信度。",
+      "价格支撑": "评估包装呈现的品质感是否能够支撑产品的目标售价。",
+      "电商表现": "评估包装在电商缩略图、详情页及直播场景中的展示效果。",
+      "信息规范": "评估包装信息是否完整、准确，并符合相关法规及行业规范。",
+      "落地一致性": "评估最终量产包装与设计方案在视觉及品质上的一致程度。"
+    };
+
+    function getScoreTone(score) {
+      if (score >= 90) return ["无需大改", "无需大改，可直接打样投产。", "#24845b"];
+      if (score >= 80) return ["少量微调", "少量细节微调。", "#2563eb"];
+      if (score >= 70) return ["局部修改", "版式 / 文案 / 材质局部修改。", "#0ea5e9"];
+      if (score >= 60) return ["重新优化", "视觉、定位需重新优化。", "#c8751b"];
+      if (score > 0) return ["推翻重做", "整体方案推翻重做。", "#c34141"];
+      return ["待评分", "完成六个维度评分后，系统会结合权重识别优势、短板和优先优化方向。", "#2563eb"];
+    }
+
+    function getAdviceBucket(rawScore) {
+      if (rawScore <= 2) return "low";
+      if (rawScore <= 3) return "mid";
+      return "high";
+    }
+
+    function weightedScore(item) {
+      return Number(((scoreState[item.id] / 5) * item.weight).toFixed(1));
+    }
+
+    function allDimensionsScored() {
+      return dimensions.every((item) => scoreState[item.id] > 0);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function collectReportData() {
+      const projectName = document.getElementById("projectName").value.trim() || "未命名项目";
+      const brandName = document.getElementById("brandName").value.trim() || "未填写";
+      const brief = document.getElementById("brief").value.trim() || "未填写";
+      const total = Number(dimensions.reduce((sum, item) => sum + weightedScore(item), 0).toFixed(1));
+      const [level, copy] = getScoreTone(total);
+      const ranked = dimensions
+        .map((item) => ({ ...item, raw: scoreState[item.id], weighted: weightedScore(item) }))
+        .sort((a, b) => a.raw - b.raw || b.weight - a.weight);
+      const strengths = ranked.filter((item) => item.raw >= 4).map((item) => item.name);
+      const focus = ranked.slice(0, 3);
+      const comparisons = compareState
+        .filter((item) => item.name || item.fileName || item.score || item.advantage || item.risk)
+        .map((item, index) => ({
+          ...item,
+          displayName: item.name || `对比方案 ${index + 1}`,
+          score: item.score || "未评分",
+          fileName: item.fileName || "未上传",
+          advantage: item.advantage || "未填写",
+          risk: item.risk || "未填写"
+        }));
+
+      return {
+        projectName,
+        brandName,
+        brief,
+        total,
+        level,
+        copy,
+        date: new Date().toLocaleDateString("zh-CN"),
+        strengths,
+        focus,
+        comparisons,
+        dimensions: dimensions.map((item) => ({
+          ...item,
+          raw: scoreState[item.id],
+          weighted: weightedScore(item),
+          note: notesState[item.id] || "未填写",
+          adviceText: item.advice[getAdviceBucket(scoreState[item.id])]
+        }))
+      };
+    }
+
+    function ensureReportReady() {
+      const missing = dimensions.filter((item) => scoreState[item.id] === 0).map((item) => item.name);
+      if (missing.length) {
+        window.alert(`还有维度未评分：${missing.join("、")}。请先完成全部评分，再导出完整评审报告。`);
+        return false;
+      }
+      return true;
+    }
+
+    function renderDimensions() {
+      reviewGrid.innerHTML = dimensions.map((item, index) => {
+        const rating = [1, 2, 3, 4, 5].map((score) => `
+          <input type="radio" name="${item.id}" id="${item.id}-${score}" value="${score}">
+          <label for="${item.id}-${score}">${score}</label>
+        `).join("");
+
+        return `
+          <article class="dimension" data-id="${item.id}">
+            <div class="dimension-head">
+              <div>
+                <div class="dimension-kicker">维度 ${String(index + 1).padStart(2, "0")}</div>
+                <h3 class="dimension-title">${item.name}（${item.weight}分）</h3>
+                <p class="dimension-desc">评分 1-5 分，系统按 ${item.weight}% 权重自动折算。</p>
+                <div class="pill-row">${item.factors.map((factor) => {
+                  const note = factorNotes[factor] || "";
+                  return `<span class="pill" tabindex="0" aria-label="${escapeHtml(`${factor}：${note}`)}">${escapeHtml(factor)}<span class="pill-note">${escapeHtml(note)}</span></span>`;
+                }).join("")}</div>
+              </div>
+              <div class="weighted-score" id="${item.id}-weighted">0 <span>/ ${item.weight}</span></div>
+            </div>
+            <div class="dimension-body">
+              <div>
+                <div class="rating" aria-label="${item.name}评分">${rating}</div>
+              </div>
+              <div class="notes">
+                <label for="${item.id}-note">评审备注</label>
+                <textarea id="${item.id}-note" placeholder="记录主要判断依据、问题或修改方向"></textarea>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function updateSummary() {
+      resultsArea.classList.toggle("is-visible", allDimensionsScored());
+
+      let total = dimensions.reduce((sum, item) => sum + weightedScore(item), 0);
+      total = Number(total.toFixed(1));
+      totalScore.textContent = total % 1 === 0 ? String(total) : String(total.toFixed(1));
+      progressFill.style.width = `${Math.min(total, 100)}%`;
+
+      dimensions.forEach((item) => {
+        const scoreNode = document.getElementById(`${item.id}-weighted`);
+        scoreNode.innerHTML = `${weightedScore(item)} <span>/ ${item.weight}</span>`;
+      });
+
+      const [level, copy, color] = getScoreTone(total);
+      scoreLevel.textContent = level;
+      scoreLevel.style.background = color;
+      overallAdvice.textContent = copy;
+
+      const scored = dimensions.filter((item) => scoreState[item.id] > 0);
+      const weak = scored
+        .map((item) => ({ ...item, raw: scoreState[item.id], weighted: weightedScore(item) }))
+        .sort((a, b) => a.raw - b.raw || b.weight - a.weight)
+        .slice(0, 3);
+
+      if (!weak.length) {
+        weaknessList.innerHTML = `<li><span>尚未评分</span><strong>-</strong></li>`;
+        return;
+      }
+
+      weaknessList.innerHTML = weak.map((item) => `
+        <li><span>${item.name}</span><strong>${item.raw}/5</strong></li>
+      `).join("");
+    }
+
+    function renderComparison() {
+      addCompareBtn.disabled = compareState.length >= 3;
+      addCompareBtn.textContent = compareState.length >= 3 ? "已达 3 个上限" : "添加对比方案";
+
+      if (!compareState.length) {
+        comparisonList.innerHTML = `<div class="compare-empty">尚未添加对比方案。点击“添加对比方案”，可补充其它包装稿进行方案横评。</div>`;
+        compareInsight.textContent = "当前仅评审主方案。添加对比方案后，系统会在报告中整理方案差异、得分参考与优化取舍。";
+        return;
+      }
+
+      comparisonList.innerHTML = `
+        <div class="compare-grid">
+          ${compareState.map((item, index) => `
+            <article class="compare-card" data-index="${index}">
+              <div class="compare-card-head">
+                <strong>对比方案 ${index + 1}</strong>
+                <button class="compare-remove" type="button" data-action="remove" data-index="${index}">删除</button>
+              </div>
+              <input class="file-input compare-file" id="compareFile-${index}" type="file" accept="image/*,.pdf" data-index="${index}">
+              <label class="compare-upload" for="compareFile-${index}">
+                ${item.previewUrl ? `<img class="compare-preview" src="${item.previewUrl}" alt="${escapeHtml(item.name || `对比方案 ${index + 1}`)}" style="display:block;">` : `<span><strong>${escapeHtml(item.fileName || "上传对比方案")}</strong>${item.fileName ? "PDF 已记录文件名" : "支持图片预览，PDF 记录文件名"}</span>`}
+              </label>
+              <div class="compare-fields">
+                <div class="compare-score-row">
+                  <input data-field="name" data-index="${index}" value="${escapeHtml(item.name)}" placeholder="方案名称，例如：方案 B">
+                  <input data-field="score" data-index="${index}" value="${escapeHtml(item.score)}" type="number" min="0" max="100" placeholder="得分">
+                </div>
+                <textarea data-field="advantage" data-index="${index}" placeholder="相对主评审方案的优势">${escapeHtml(item.advantage)}</textarea>
+                <textarea data-field="risk" data-index="${index}" placeholder="相对主评审方案的不足或风险">${escapeHtml(item.risk)}</textarea>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      `;
+
+      const filled = compareState.filter((item) => item.name || item.fileName || item.score || item.advantage || item.risk).length;
+      compareInsight.textContent = `已添加 ${compareState.length}/3 个对比方案，其中 ${filled} 个已有记录。生成评审报告后，会自动汇总主方案与备选方案的对比结论。`;
+    }
+
+    function buildReport() {
+      if (!ensureReportReady()) {
+        return;
+      }
+
+      resultsArea.classList.add("is-visible");
+      const data = collectReportData();
+      const dimensionText = data.dimensions.map((item) => {
+        const note = item.note !== "未填写" ? `\n  备注：${item.note}` : "";
+        return `- ${item.name}：${item.raw}/5，折算 ${item.weighted}/${item.weight}。${item.adviceText}${note}`;
+      }).join("\n");
+
+      const focusText = data.focus.map((item, index) => {
+        return `${index + 1}. ${item.name}：${item.advice[getAdviceBucket(item.raw)]}`;
+      }).join("\n");
+      const compareText = data.comparisons.length
+        ? data.comparisons.map((item, index) => {
+            return `${index + 1}. ${item.displayName}｜参考得分：${item.score}/100｜文件：${item.fileName}\n  优势：${item.advantage}\n  风险：${item.risk}`;
+          }).join("\n")
+        : "未添加对比方案。本轮报告仅基于主评审方案生成结论。";
+
+      reportOutput.textContent = [
+        `项目：${data.projectName}`,
+        `品牌 / 产品：${data.brandName}`,
+        `设计目标：${data.brief}`,
+        "",
+        `最终得分：${data.total}/100`,
+        `评级：${data.level}`,
+        `分数评审备注：${data.copy}`,
+        "",
+        `优势维度：${data.strengths.length ? data.strengths.join("、") : "暂无明显高分维度，建议先集中补强基础表现。"}`,
+        "",
+        "分项结果：",
+        dimensionText,
+        "",
+        "方案对比：",
+        compareText,
+        "",
+        "优先优化建议：",
+        focusText
+      ].join("\n");
+    }
+
+    function renderPdfReport() {
+      const data = collectReportData();
+      const rows = data.dimensions.map((item) => `
+        <tr>
+          <td>${escapeHtml(item.name)}</td>
+          <td>${item.raw}/5</td>
+          <td>${item.weighted}/${item.weight}</td>
+          <td>${escapeHtml(item.factors.join("、"))}</td>
+          <td>${escapeHtml(item.note)}</td>
+          <td>${escapeHtml(item.adviceText)}</td>
+        </tr>
+      `).join("");
+      const focusItems = data.focus.map((item) => `
+        <li>${escapeHtml(item.name)}：${escapeHtml(item.advice[getAdviceBucket(item.raw)])}</li>
+      `).join("");
+      const compareRows = data.comparisons.map((item) => `
+        <tr>
+          <td>${escapeHtml(item.displayName)}</td>
+          <td>${escapeHtml(item.score)}/100</td>
+          <td>${escapeHtml(item.fileName)}</td>
+          <td>${escapeHtml(item.advantage)}</td>
+          <td>${escapeHtml(item.risk)}</td>
+        </tr>
+      `).join("");
+      const compareSection = data.comparisons.length ? `
+        <section class="pdf-section">
+          <h2>方案对比</h2>
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th>方案</th>
+                <th>参考得分</th>
+                <th>文件</th>
+                <th>相对优势</th>
+                <th>不足 / 风险</th>
+              </tr>
+            </thead>
+            <tbody>${compareRows}</tbody>
+          </table>
+        </section>
+      ` : `
+        <section class="pdf-section">
+          <h2>方案对比</h2>
+          <p>未添加对比方案。本轮报告仅基于主评审方案生成结论。</p>
+        </section>
+      `;
+
+      pdfReport.innerHTML = `
+        <header class="pdf-cover">
+          <h1>vetwish包装设计评审报告</h1>
+          <div class="pdf-meta">
+            <div>项目名称：${escapeHtml(data.projectName)}</div>
+            <div>品牌 / 产品：${escapeHtml(data.brandName)}</div>
+            <div>评审日期：${escapeHtml(data.date)}</div>
+            <div>评审体系：100分制六维包装评审</div>
+          </div>
+        </header>
+
+        <section class="pdf-summary-grid">
+          <div class="pdf-card"><strong>最终得分</strong><div class="pdf-score">${data.total}/100</div></div>
+          <div class="pdf-card"><strong>评级</strong><div>${escapeHtml(data.level)}</div></div>
+          <div class="pdf-card"><strong>分数评审备注</strong><div>${escapeHtml(data.copy)}</div></div>
+        </section>
+
+        <section class="pdf-section">
+          <h2>设计目标</h2>
+          <p>${escapeHtml(data.brief)}</p>
+        </section>
+
+        <section class="pdf-section">
+          <h2>优势维度</h2>
+          <p>${escapeHtml(data.strengths.length ? data.strengths.join("、") : "暂无明显高分维度，建议先集中补强基础表现。")}</p>
+        </section>
+
+        <section class="pdf-section">
+          <h2>分项评分结果</h2>
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th>评审维度</th>
+                <th>原始评分</th>
+                <th>折算得分</th>
+                <th>评审要素</th>
+                <th>备注</th>
+                <th>系统建议</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </section>
+
+        ${compareSection}
+
+        <section class="pdf-section">
+          <h2>优先优化建议</h2>
+          <ol class="pdf-list">${focusItems}</ol>
+        </section>
+      `;
+    }
+
+    function exportPdfReport() {
+      if (!ensureReportReady()) {
+        return;
+      }
+      buildReport();
+      renderPdfReport();
+      window.print();
+    }
+
+    renderDimensions();
+    renderComparison();
+    updateSummary();
+
+    reviewGrid.addEventListener("change", (event) => {
+      if (event.target.type === "radio") {
+        scoreState[event.target.name] = Number(event.target.value);
+        updateSummary();
+      }
+    });
+
+    reviewGrid.addEventListener("input", (event) => {
+      if (event.target.tagName === "TEXTAREA") {
+        const id = event.target.id.replace("-note", "");
+        notesState[id] = event.target.value.trim();
+      }
+    });
+
+    document.getElementById("generateBtn").addEventListener("click", buildReport);
+    document.querySelectorAll(".exportPdfTrigger").forEach((button) => {
+      button.addEventListener("click", exportPdfReport);
+    });
+
+    addCompareBtn.addEventListener("click", () => {
+      if (compareState.length >= 3) {
+        window.alert("最多只能添加 3 个对比方案。");
+        return;
+      }
+
+      compareState.push({
+        name: "",
+        fileName: "",
+        score: "",
+        advantage: "",
+        risk: "",
+        previewUrl: ""
+      });
+      renderComparison();
+    });
+
+    comparisonList.addEventListener("click", (event) => {
+      if (event.target.dataset.action === "remove") {
+        const index = Number(event.target.dataset.index);
+        const item = compareState[index];
+        if (item?.previewUrl) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+        compareState.splice(index, 1);
+        renderComparison();
+      }
+    });
+
+    comparisonList.addEventListener("input", (event) => {
+      const { field, index } = event.target.dataset;
+      if (!field) return;
+
+      const item = compareState[Number(index)];
+      if (!item) return;
+      item[field] = event.target.value.trim();
+
+      if (field === "score") {
+        const numeric = Number(item.score);
+        if (item.score && numeric > 100) item.score = "100";
+        if (item.score && numeric < 0) item.score = "0";
+      }
+
+      const filled = compareState.filter((entry) => entry.name || entry.fileName || entry.score || entry.advantage || entry.risk).length;
+      compareInsight.textContent = `已添加 ${compareState.length}/3 个对比方案，其中 ${filled} 个已有记录。生成评审报告后，会自动汇总主方案与备选方案的对比结论。`;
+    });
+
+    comparisonList.addEventListener("change", (event) => {
+      if (!event.target.classList.contains("compare-file")) return;
+
+      const index = Number(event.target.dataset.index);
+      const item = compareState[index];
+      const file = event.target.files[0];
+      if (!item || !file) return;
+
+      if (item.previewUrl) {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+
+      item.fileName = file.name;
+      item.previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : "";
+      renderComparison();
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      Object.keys(scoreState).forEach((key) => scoreState[key] = 0);
+      Object.keys(notesState).forEach((key) => notesState[key] = "");
+      compareState.forEach((item) => {
+        if (item.previewUrl) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
+      compareState.length = 0;
+      document.querySelectorAll("input[type='radio']").forEach((input) => input.checked = false);
+      document.querySelectorAll(".notes textarea").forEach((textarea) => textarea.value = "");
+      reportOutput.textContent = "点击“生成评审报告”后，这里会输出可复制给团队或客户的评审结论。";
+      pdfReport.innerHTML = "";
+      renderComparison();
+      updateSummary();
+    });
+
+    document.getElementById("designFile").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.type.startsWith("image/")) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+        uploadLabel.style.display = "none";
+      } else {
+        preview.style.display = "none";
+        uploadLabel.style.display = "grid";
+        uploadLabel.innerHTML = `<span><strong>${file.name}</strong>PDF 已上传，可继续评分</span>`;
+      }
+    });
+  </script>
+</body>
+</html>
